@@ -41,3 +41,20 @@ elif [[ -n "$PROTOCOL" && "x${PROTOCOL^^}" == "xHTTP" ]]
 then
     xmlstarlet edit -L -u "/jmeterTestPlan/hashTree/TestPlan/elementProp[@testname='User Defined Variables']/collectionProp/elementProp[@name='request_protocol']/stringProp[@name='Argument.value']" -v "http" $CONFIG
 fi
+
+# Set users
+WORKERS_COUNT=$(grep -v "^$" /root/workers_*|wc -l)
+USERS_PER_NODE=$(( $USERS_COUNT/$WORKERS_COUNT ))
+[ $USERS_PER_NODE -gt 1000 ] && { echo "Not enough workers nodes. Maximum users count per worker is 135. For running test with $USERS_COUNT you should have $(( $USERS_COUNT/135 )) nodes"; exit 1; }
+USERS_COUNT=$USERS_PER_NODE
+[ "x$USERS_COUNT" != "x0" ] || USERS_COUNT=1
+
+frontendPoolUsers=$(( $USERS_COUNT*90/100 ))
+[ "x$frontendPoolUsers" != "x0" ] || frontendPoolUsers=1
+[ ! -n "$frontendPoolUsers" ] || xmlstarlet edit -L -u "/jmeterTestPlan/hashTree/TestPlan/elementProp[@testname='User Defined Variables']/collectionProp/elementProp[@name='frontendPoolUsers']/stringProp[@name='Argument.value']" -v "$frontendPoolUsers"  $CONFIG
+
+adminPoolUsers=$(( $USERS_COUNT*10/100 ))
+[ "x$adminPoolUsers" != "x0" ] || adminPoolUsers=1
+[ ! -n "$adminPoolUsers" ] || xmlstarlet edit -L -u "/jmeterTestPlan/hashTree/TestPlan/elementProp[@testname='User Defined Variables']/collectionProp/elementProp[@name='adminPoolUsers']/stringProp[@name='Argument.value']" -v "$adminPoolUsers"  $CONFIG
+
+
