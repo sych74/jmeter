@@ -9,9 +9,11 @@ baseUrl: https://raw.githubusercontent.com/sych74/jmeter/master/addons/magento
 onInstall:
   - installJmeterMagento: master,workers
   - installMagentoScripts
+  - installAddon:
+      id: jmeter-magento-addon
+      nodeGroup: master  
 
 actions:
-  
   installJmeterMagento:
     - cmd[${this}]: |-
         [ -d ~/jmeter-magento ] && rm -rf ~/jmeter-magento;
@@ -25,3 +27,107 @@ actions:
         wget -nv ${baseUrl}/scripts/run-workers.magento.sh -O ~/run-workers.magento.sh;
         chmod +x ~/*.sh;
 
+addons:
+  - id: jmeter-magento-addon
+    name: JMeter Cluster Settings
+    description: Run, stop or update Magento test plan.
+
+    globals:
+      WEBROOT_DIR: /var/www/webroot/ROOT
+      JM_DIR: /root
+      LOG: /var/log/autotests.log
+      RESULTS_DIR: /root/jmeter-results
+      GRAFANA_PASSWORD: ${fn.password(12)}
+
+    settings:
+      main:
+        fields:
+            - name: domain
+              caption: Protocol and Domain
+              type: string
+              tooltip: Testing website entry point.
+              inputType: string
+              default: http://example.com
+              regex: "^(?:http(s)?://)?[\\w.-]+(?:\\.[\\w\\.-]+)+[\\w\\-\\._~:/?#[\\]@!\\$&'\\(\\)\\*\\+,;=.]+$"
+              regexText: 'Incorrect Link (example: http(s)://example.com/)'
+              required: true
+            - name: vu
+              caption: Virtual Users (VU)
+              tooltip: Number of active concurrent threads.
+              type: spinner
+              min: 1
+              max: 640
+              increment: 1
+              decimalPrecision: ''
+              default: 50
+            - name: duration
+              caption: Test Duration, min
+              tooltip: Value should be from 1 to 60 minutes.
+              type: spinner
+              min: 1
+              max: 60
+              increment: 1
+              decimalPrecision: ''
+              default: 30
+            - name: rampup
+              caption: Ramp-up Period, min
+              tooltip: |
+                The time frame for all virtual users (VU) to become active. <br>E.g. for 120 VU and ramp-up time 1 minute - 2 new VU will be added each second.<br>
+                Value range - from 0 to 60 minutes.<br>
+                To start all VU immediately please set ramp-up period to 0.
+              type: spinner
+              min: 0
+              max: 60
+              increment: 1
+              decimalPrecision: ''
+              default: 20
+
+    buttons:
+      - action: runMagentoTest
+        caption: Run Test
+        logsPath: ${globals.LOG}
+        successText: The test is in progress now!
+
+      - action: stopMagentoTest
+        caption: Stop Test
+        logsPath: ${globals.LOG}
+        successText: The test has been stopped.
+
+      - settings: main
+        action: setMagentoConfig
+        caption: Configure
+        logsPath: ${globals.LOG}
+        submitButtonText: Apply
+        successText: Update has been successfully applied.
+
+    menu:
+      - action: cleanResultsDir
+        caption: Clean Results
+        logsPath: ${globals.LOG}
+        successText: Results directory was successfully cleaned.
+      - settings: configGrafana
+        action: resetGrafanaPassword
+        caption: Reset Grafana Password
+        logsPath: ${globals.LOG}
+        successText: Password has been successfully changed!.
+      - settings: configRemoteWorkers
+        action: setRemoteWorkers
+        caption: Setup Remote Workers
+        logsPath: ${globals.LOG}
+        successText: Remote Jelastic platforms successfully changed!.
+
+    actions:
+      runMagentoTest:
+        - cmd[master]: chmod 755 /var/run/screen;/usr/bin/pkill screen;screen -wipe; screen -d -m /root/run-workers.magento.sh -u ${settings.domain} -d ${settings.duration}
+        - return:
+            type: info
+            message: Progress of the running test is available at [${env.url}](${env.url})
+
+      stopMagentoTest:
+        - cmd [master]: chmod 755 /var/run/screen;/usr/bin/pkill screen;screen -wipe; screen -d -m /root/kill-workers.sh
+    
+      setMagentoConfig:
+        cmd [master]: bash /root/prepare_magento.plan.sh -u ${settings.vu} -r ${settings.rampup} -t ${settings.duration} -d ${settings.domain} -l '${settings.urls}' 
+  
+      cleanResultsDir:
+        cmd [master]: bash /root/clean-results.sh
