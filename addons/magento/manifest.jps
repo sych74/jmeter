@@ -1,0 +1,27 @@
+type: update
+id: jmeter-magento
+name: JMeter Magento
+description: JMeter Magento
+logo: /images/jmeter-cluster-logo.png
+
+baseUrl: https://raw.githubusercontent.com/sych74/jmeter/master/addons/magento
+
+onInstall:
+  - installJmeterMagento: master,workers
+  - installMagentoScripts
+
+actions:
+  
+  installJmeterMagento:
+    - cmd[${this}]: |-
+        [ -d ~/jmeter-magento ] && rm -rf ~/jmeter-magento;
+        mkdir ~/jmeter-magento;
+        curl -s '${baseUrl}/jmeter/jmeter-magento.tar.gz' | tar xz -C $HOME/jmeter-magento;
+
+  installMagentoScripts:
+    - cmd[master]: |-
+        wget -nv ${baseUrl}/configs/TEST_PLAN-MAGENTO.template -O ~/TEST_PLAN-MAGENTO.template;
+        wget -nv ${baseUrl}/scripts/prepare_magento.plan.sh -O ~/prepare_magento.plan.sh;
+        wget -nv ${baseUrl}/scripts/run-workers.magento.sh -O ~/run-workers.magento.sh;
+        chmod +x ~/*.sh;
+
