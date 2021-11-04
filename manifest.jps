@@ -333,6 +333,7 @@ actions:
       user: root
 
   installJMeterAddon:
+    - install: ${baseUrl}/addons/magento/manifest.jps
     - jps:
         id: jmeter-addon
         name: JMeter Cluster Settings
