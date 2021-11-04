@@ -82,6 +82,27 @@ addons:
               decimalPrecision: ''
               default: 20
 
+      configGrafana:
+        fields:
+          - name: grafanaPassword
+            caption: Grafana Password
+            type: string
+            tooltip: New password for user admin
+            inputType: password
+            required: true
+
+      configRemoteWorkers:
+        fields:
+        - name: platformList
+          caption: Remote Workers Platform List
+          tooltip: |
+            List of remote Jelastic Platforms with tokens.<br>
+            Remote Jelastic app should be indicated as full url and token with ";" separator<br>
+            For example: https://app.demo.jelastic.com/ MYSECURETOKEN1; https://app.demo2.jelastic.com/ MYSECURETOKEN2<br>
+            If the field is empty then test plan will be configured only for local JMeter workers.
+          type: text
+          height: 150
+
     buttons:
       - action: runMagentoTest
         caption: Run Test
@@ -127,8 +148,11 @@ addons:
         - cmd [master]: chmod 755 /var/run/screen;/usr/bin/pkill screen;screen -wipe; screen -d -m /root/kill-workers.sh
     
       setMagentoConfig:
-        cmd [master]: bash /root/prepare_magento.plan.sh -u ${settings.vu} -r ${settings.rampup} -t ${settings.duration} -d ${settings.domain} -l '${settings.urls}' 
+        cmd [master]: bash /root/prepare_magento.plan.sh -u ${settings.vu} -r ${settings.rampup} -t ${settings.duration} -d ${settings.domain} 
   
       cleanResultsDir:
         cmd [master]: bash /root/clean-results.sh
-
+        
+      resetGrafanaPassword:
+        - cmd [cp]: bash /root/grafana-set-password.sh ${settings.grafanaPassword}
+          user: root
