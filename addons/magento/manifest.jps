@@ -131,3 +131,4 @@ addons:
   
       cleanResultsDir:
         cmd [master]: bash /root/clean-results.sh
+
