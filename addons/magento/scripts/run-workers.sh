@@ -38,7 +38,7 @@ do
    iptables -I INPUT -s $i -j ACCEPT
    iptables -I OUTPUT -d $i -j ACCEPT
    IP_FOR_ALLOW=$(ip r g $i |awk -F 'src' '{print $2}'|xargs)
-   ssh -o StrictHostKeyChecking=no -o ConnectTimeout=5 -o ConnectionAttempts=2 -n -f root@$i "sh -c 'echo $NAMESERVER > /etc/resolv.conf;iptables -I INPUT -s $IP_FOR_ALLOW -j ACCEPT;iptables -I OUTPUT -d $IP_FOR_ALLOW -j ACCEPT;/usr/bin/pkill java; /usr/bin/pkill jmeter; timeout ${TEST_DURATION} bash /root/jmeter/bin/jmeter-server -Jserver.rmi.ssl.disable=true -Djava.rmi.server.hostname=$i > /dev/null 2>&1 &'"
+   ssh -o StrictHostKeyChecking=no -o ConnectTimeout=5 -o ConnectionAttempts=2 -n -f root@$i "sh -c 'echo $NAMESERVER > /etc/resolv.conf;iptables -I INPUT -s $IP_FOR_ALLOW -j ACCEPT;iptables -I OUTPUT -d $IP_FOR_ALLOW -j ACCEPT;/usr/bin/pkill java; /usr/bin/pkill jmeter; timeout ${TEST_DURATION} bash /root/jmeter-magento/bin/jmeter-server -Jserver.rmi.ssl.disable=true -Djava.rmi.server.hostname=$i > /dev/null 2>&1 &'"
    [ "x$?" == "x0" ] && echo "Add iptables rules and starting jmeter-worker on $i [OK]" >> $JM_LOG || echo "Add iptables rules and starting jmeter-worker on $i [FAILED]" >> $JM_LOG
 done
 
@@ -59,11 +59,11 @@ ulimit -n 999999
 WORKERS="$(cat workers_list workers_remote|xargs |sed -e "s/ /:1099,/g"):1099"
 [ "x$WORKERS" == "x:1099" ] && WORKERS='' || WORKERS="-R $WORKERS"
 
-timeout $TEST_DURATION bash /root/jmeter/bin/jmeter -Jserver.rmi.ssl.disable=true -n -r -t $TEST_PLAN -l ${CSV_DIR}/${TEST_NAME}.csv -e $WORKERS >> $JM_LOG
+timeout $TEST_DURATION bash /root/jmeter-magento/bin/jmeter -Jserver.rmi.ssl.disable=true -n -r -t $TEST_PLAN -l ${CSV_DIR}/${TEST_NAME}.csv -e $WORKERS >> $JM_LOG
 echo 'Load test finished' >> $JM_LOG
 echo 'Genering report...' >> $JM_LOG
 sed -i '' -e '$ d' ${CSV_DIR}/${TEST_NAME}.csv
-/root/jmeter/bin/jmeter -g ${CSV_DIR}/${TEST_NAME}.csv -o ${RESULTS_DIR}/${TEST_NAME} >> $JM_LOG
+/root/jmeter-magento/bin/jmeter -g ${CSV_DIR}/${TEST_NAME}.csv -o ${RESULTS_DIR}/${TEST_NAME} >> $JM_LOG
 echo 'Genering report [DONE]' >> $JM_LOG
 
 for i in $(cat /root/workers_list;cat /root/workers_remote);
