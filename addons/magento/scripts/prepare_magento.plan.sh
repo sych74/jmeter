@@ -57,4 +57,6 @@ adminPoolUsers=$(( $USERS_COUNT*10/100 ))
 [ "x$adminPoolUsers" != "x0" ] || adminPoolUsers=1
 [ ! -n "$adminPoolUsers" ] || xmlstarlet edit -L -u "/jmeterTestPlan/hashTree/TestPlan/elementProp[@testname='User Defined Variables']/collectionProp/elementProp[@name='adminPoolUsers']/stringProp[@name='Argument.value']" -v "$adminPoolUsers"  $CONFIG
 
+#Set files folder
+xmlstarlet edit -L -u "/jmeterTestPlan/hashTree/TestPlan/elementProp[@testname='User Defined Variables']/collectionProp/elementProp[@name='files_folder']/stringProp[@name='Argument.value']" -v "/root/jmeter-magento/bin/files/" $CONFIG
 
