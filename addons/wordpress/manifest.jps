@@ -1,0 +1,243 @@
+type: update
+id: jmeter-wordpress
+name: JMeter Wordpress
+description: JMeter Wordpress
+logo: /images/jmeter-cluster-logo.png
+
+settings:
+  main:
+    fields:
+      - type: radio-fieldset
+        caption: Configuration type
+        name: cfg-type
+        default: 1
+        values:
+          1: Use default test plan with tunnable parameters
+          2: Deploy custom test plan via <a href="https://cwiki.apache.org/confluence/display/JMETER/JmxTestPlan#JmxTestPlan-JMXFormat" target="_blank">JMX format</a>
+          3: WordPress preconfigured testplan
+        showIf:
+          1:
+            - name: domain
+              caption: Protocol and Domain
+              type: string
+              tooltip: Testing website entry point.
+              inputType: string
+              default: http://example.com
+              regex: "^(?:http(s)?://)?[\\w.-]+(?:\\.[\\w\\.-]+)+[\\w\\-\\._~:/?#[\\]@!\\$&'\\(\\)\\*\\+,;=.]+$"
+              regexText: 'Incorrect Link (example: http(s)://example.com/)'
+              required: true
+            - name: vu
+              caption: Virtual Users (VU)
+              tooltip: Number of active concurrent threads.
+              type: spinner
+              min: 1
+              max: 640
+              increment: 1
+              decimalPrecision: ''
+              default: 50
+            - name: duration
+              caption: Test Duration, min
+              tooltip: Value should be from 1 to 60 minutes.
+              type: spinner
+              min: 1
+              max: 60
+              increment: 1
+              decimalPrecision: ''
+              default: 30
+            - name: rampup
+              caption: Ramp-up Period, min
+              tooltip: |
+                The time frame for all virtual users (VU) to become active. <br>E.g. for 120 VU and ramp-up time 1 minute - 2 new VU will be added each second.<br>
+                Value range - from 0 to 60 minutes.<br>
+                To start all VU immediately please set ramp-up period to 0.
+              type: spinner
+              min: 0
+              max: 60
+              increment: 1
+              decimalPrecision: ''
+              default: 20
+            - name: urls
+              caption: URL List
+              tooltip: |
+                List of website urls that should be included to the test plan.  
+                For example: /index.php /wp-login.php.  
+                If the field is empty then test plan will be configured only for website root url.
+              type: text
+              inputType: text
+              required: false
+          2:
+            - name: jmx
+              caption: XML Manifest
+              tooltip: "Please insert XML content of your jmx file here."
+              type: text
+              height: 190
+              inputType: text
+              required: true
+          3:
+            - name: domain
+              caption: Protocol and Domain
+              type: string
+              tooltip: Testing website entry point.
+              inputType: string
+              default: http://example.com
+              regex: "^(?:http(s)?://)?[\\w.-]+(?:\\.[\\w\\.-]+)+[\\w\\-\\._~:/?#[\\]@!\\$&'\\(\\)\\*\\+,;=.]+$"
+              regexText: 'Incorrect Link (example: http(s)://example.com/)'
+              required: true
+            - name: vu
+              caption: Virtual Users (VU)
+              tooltip: Number of active concurrent threads.
+              type: spinner
+              min: 1
+              max: 640
+              increment: 1
+              decimalPrecision: ''
+              default: 50
+            - name: duration
+              caption: Test Duration, min
+              tooltip: Value should be from 1 to 60 minutes.
+              type: spinner
+              min: 1
+              max: 60
+              increment: 1
+              decimalPrecision: ''
+              default: 30
+            - name: rampup
+              caption: Ramp-up Period, min
+              tooltip: |
+                The time frame for all virtual users (VU) to become active. <br>E.g. for 120 VU and ramp-up time 1 minute - 2 new VU will be added each second.<br>
+                Value range - from 0 to 60 minutes.<br>
+                To start all VU immediately please set ramp-up period to 0.
+              type: spinner
+              min: 0
+              max: 60
+              increment: 1
+              decimalPrecision: ''
+              default: 20
+            - name: urls
+              caption: URL List
+              tooltip: |
+                List of website urls that should be included to the test plan.<br>
+                For example: /index.php /hello-world.<br>
+                If the field is empty then test plan will be configured only for website root url.
+              type: text
+              inputType: text
+              required: false  
+            - name: wpLogin
+              caption: WordPress Login
+              type: string
+              tooltip: |
+                WordPress login pattern without numbers, which was generated via:  
+                for SW_USER_I in {10..10010}; do wp --allow-root user create "username${SW_USER_I}" "username${SW_USER_I}@example.com" --user_pass="MySuperPassword" --role="subscriber"; done;.<br>
+                In current example via wp cli will be created 10000 users with usernames from username10 to username10010 and in this field should be specified pattern "username"
+              inputType: string
+              default: username
+              required: true
+            - name: wpPassword
+              caption: WordPress Password
+              type: string
+              tooltip: WordPress preconfigured password for generated users.
+              inputType: string
+              default: password
+              required: true
+  configGrafana:
+    fields:
+      - name: grafanaPassword
+        caption: Grafana Password
+        type: string
+        tooltip: New password for user admin
+        inputType: password
+        required: true
+  configRemoteWorkers:
+    fields:
+      - name: platformList
+        caption: Remote Workers Platform List
+        tooltip: |
+          List of remote Jelastic Platforms with tokens.<br>
+          Remote Jelastic app should be indicated as full url and token with ";" separator<br>
+          For example: https://app.demo.jelastic.com/ MYSECURETOKEN1; https://app.demo2.jelastic.com/ MYSECURETOKEN2<br>
+          If the field is empty then test plan will be configured only for local JMeter workers.
+        type: text
+        height: 150
+
+
+
+onInstall:
+  - installAddon:
+      id: jmeter-wordpress-addon
+      nodeGroup: master  
+
+addons:
+- id: jmeter-wordpress-addon
+  name: JMeter Cluster Settings for Wordpress
+  description: Run, stop or update the test plan.
+  type: update
+  logo: /images/jmeter-cluster-logo.png
+
+  buttons:
+          - action: runTest
+            caption: Run Test
+            logsPath: ${globals.LOG}
+            successText: The test is in progress now!
+
+          - action: stopTest
+            caption: Stop Test
+            logsPath: ${globals.LOG}
+            successText: The test has been stopped.
+
+          - settings: main
+            action: setConfig
+            caption: Configure
+            logsPath: ${globals.LOG}
+            submitButtonText: Apply
+            successText: Update has been successfully applied.
+
+  menu:
+          - action: cleanResultsDir
+            caption: Clean Results
+            logsPath: ${globals.LOG}
+            successText: Results directory was successfully cleaned.
+          - settings: configGrafana
+            action: resetGrafanaPassword
+            caption: Reset Grafana Password
+            logsPath: ${globals.LOG}
+            successText: Password has been successfully changed!.
+          - settings: configRemoteWorkers
+            action: setRemoteWorkers
+            caption: Setup Remote Workers
+            logsPath: ${globals.LOG}
+            successText: Remote Jelastic platforms successfully changed!.
+
+
+  actions:
+    runTest:
+      if (${settings.cfg-type} == 1 || ${settings.cfg-type} == 3):
+        cmd[master]: chmod 755 /var/run/screen;/usr/bin/pkill screen;screen -wipe;screen -d -m /root/run-workers.sh -u ${settings.domain} -d ${settings.duration}
+      if (${settings.cfg-type} == 2):
+        cmd[master]: chmod 755 /var/run/screen;/usr/bin/pkill screen;screen -wipe;screen -d -m /root/run-workers.sh -u custom -d 0
+      return:
+        type: info
+        message: Progress of the running test is available at [${env.url}](${env.url})
+
+    stopTest:
+      - cmd [master]: chmod 755 /var/run/screen;/usr/bin/pkill screen;screen -wipe;screen -d -m /root/kill-workers.sh
+    
+    setConfig:
+      if (${settings.cfg-type} == 1):
+        cmd [master]: bash /root/prepare_plan.sh -u ${settings.vu} -r ${settings.rampup} -t ${settings.duration} -d ${settings.domain} -l '${settings.urls}'
+      if (${settings.cfg-type} == 2):
+        writeFile:
+          nodeGroup: master
+          path: /root/TEST_PLAN.jmx
+          body: ${settings.jmx}
+      if (${settings.cfg-type} == 3):
+        cmd [master]: bash /root/prepare_wordpress.plan.sh -u ${settings.vu} -r ${settings.rampup} -t ${settings.duration} -d ${settings.domain} -l '${settings.urls}' -w ${settings.wpLogin} -p '${settings.wpPassword}' 
+    cleanResultsDir:
+      cmd [master]: bash /root/clean-results.sh
+    
+    resetGrafanaPassword:
+      - cmd [cp]: bash /root/grafana-set-password.sh ${settings.grafanaPassword}
+        user: root
+      
+    setRemoteWorkers:
+      - cmd [master]: bash /root/manage-remote.sh '${settings.platformList}'
+        user: root
