@@ -56,7 +56,6 @@ addons:
               tooltip: Number of active concurrent threads.
               type: spinner
               min: 1
-              max: 640
               increment: 1
               decimalPrecision: ''
               default: 50
@@ -80,7 +79,7 @@ addons:
               max: 60
               increment: 1
               decimalPrecision: ''
-              default: 20
+              default: 5
 
       configGrafana:
         fields:
